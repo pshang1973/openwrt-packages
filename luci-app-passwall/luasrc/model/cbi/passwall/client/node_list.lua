@@ -75,7 +75,11 @@ if nodes_display:find("compact_display_nodes") then
         local port = m:get(n, "port") or ""
         str = str .. translate(type) .. "：" .. remarks
         if address ~= "" and port ~= "" then
-            str = str .. string.format("（%s:%s）", address, port)
+            if datatypes.ip6addr(address) then
+                str = str .. string.format("（[%s]:%s）", address, port)
+            else
+                str = str .. string.format("（%s:%s）", address, port)
+            end
             str = str .. string.format("<input type='hidden' id='cbid.%s.%s.address' value='%s'>", appname, n, address)
             str = str .. string.format("<input type='hidden' id='cbid.%s.%s.port' value='%s'>", appname, n, port)
         end
@@ -133,10 +137,15 @@ end
 ---- Ping
 o = s:option(DummyValue, "ping", translate("Latency"))
 o.width = "8%"
-if not nodes_ping:find("auto_ping") then
-    o.template = appname .. "/node_list/ping"
-else
-    o.template = appname .. "/node_list/auto_ping"
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+    local result = "---"
+    if not nodes_ping:find("auto_ping") then
+        result = string.format('<span class="ping"><a href="javascript:void(0)" onclick="javascript:ping_node(\'%s\',this)">Ping</a></span>', n)
+    else
+        result = string.format('<span class="ping_value" cbiid="%s">---</span>', n)
+    end
+    return result
 end
 
 m:append(Template(appname .. "/node_list/node_list"))
